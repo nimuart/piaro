@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{cf4df097-ff0f-4857-aaf2-b629de0d7b7d}">
+		<property name="assetPath">
+			<value>120 BPM - Metronome - Drumset Fundamentals - Trimmed.wav</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>61.816604166666664</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{aaccedbd-d16c-40b1-8d54-769652578ebd}</destination>
+		</relationship>
+	</object>
+</objects>
