@@ -15,7 +15,7 @@ MonoBehaviour:
   Path: Assets/FMOD/sound/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639052984348301083
+  lastModified: 639052999173539548
   FileSizes:
   - Name: Desktop
     Value: 896
@@ -35,10 +35,10 @@ MonoBehaviour:
   Path: Assets/FMOD/sound/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639052984348291089
+  lastModified: 639052999173529528
   FileSizes:
   - Name: Desktop
-    Value: 11233376
+    Value: 11233632
   Exists: 1
 --- !u!114 &-3825148011371398455
 MonoBehaviour:
@@ -66,7 +66,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 550
+  Length: 80
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92,7 +92,7 @@ MonoBehaviour:
   - {fileID: -6301222917008075051}
   StringsBanks:
   - {fileID: -8843013979046481810}
-  cacheTime: 639052984348301083
+  cacheTime: 639052999173539548
   cacheVersion: 131635
 --- !u!114 &3962706617486484775
 MonoBehaviour:
@@ -147,7 +147,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 1350
+  Length: 100
 --- !u!114 &8815231078316182680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,4 +174,4 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 3761
+  Length: 100
