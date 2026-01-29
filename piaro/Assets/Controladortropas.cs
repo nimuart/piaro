@@ -3,8 +3,9 @@ using System.Collections;
 
 public class ControladorTropas : MonoBehaviour
 {
-    [Header("Configuración de Movimiento")]
+    [Header("Movimiento")]
     public float distanciaPaso = 2f;
+    public float distanciaFast = 4f;
     public float velocidadMovimiento = 5f;
 
     private Vector3 posicionObjetivo;
@@ -12,51 +13,81 @@ public class ControladorTropas : MonoBehaviour
 
     void Start()
     {
-        // La posición inicial es donde lo pongas en el editor
         posicionObjetivo = transform.position;
     }
 
     void OnEnable()
     {
-        // Nos suscribimos al evento del RitmoManager
-        RitmoManager.OnComandoDetectado += ManejarComando;
+        RitmoManager.OnComboDetectado += ManejarCombo;
+        RitmoManager.OnComandoDetectado += ManejarComandoLegacy; // opcional
     }
 
     void OnDisable()
     {
-        // Nos desuscribimos para evitar errores de memoria
-        RitmoManager.OnComandoDetectado -= ManejarComando;
+        RitmoManager.OnComboDetectado -= ManejarCombo;
+        RitmoManager.OnComandoDetectado -= ManejarComandoLegacy;
     }
 
-    // Este método se ejecuta automáticamente cuando el RitmoManager detecta un combo
-    void ManejarComando(string comando)
+    // Nuevo: recibe el combo completo con su "accion"
+    void ManejarCombo(RitmoManager.ComboDef combo)
     {
-        switch (comando)
+        switch (combo.accion)
         {
-            case "MARCHA_PataPataPataPon":
-                MoverHaciaAdelante();
-                break;
-            
-            case "HUIDA_DonDonDonPon":
-                MoverHaciaAtras();
+            case RitmoManager.TipoAccion.MoverAdelante:
+                Mover(Vector3.right, distanciaPaso);
                 break;
 
-            case "FALLO":
-                Debug.Log("Las tropas se tambalean por perder el ritmo...");
-                // Aquí podrías poner una animación de tropiezo
+            case RitmoManager.TipoAccion.MoverAtras:
+                Mover(Vector3.left, distanciaPaso);
+                break;
+
+            case RitmoManager.TipoAccion.MoverFast:
+                Mover(Vector3.right, distanciaFast);
+                break;
+
+            case RitmoManager.TipoAccion.Atacar:
+                Debug.Log("Tropas: ATAQUE!");
+                // Aquí luego: animación / hitbox / daño
+                break;
+
+            case RitmoManager.TipoAccion.AtacarAereo:
+                Debug.Log("Tropas: ATAQUE AÉREO!");
+                break;
+
+            case RitmoManager.TipoAccion.Defensa:
+                Debug.Log("Tropas: DEFENSA!");
+                break;
+
+            case RitmoManager.TipoAccion.Salto:
+                Debug.Log("Tropas: SALTO!");
+                break;
+
+            case RitmoManager.TipoAccion.SaltoAtaque:
+                Debug.Log("Tropas: SALTO + ATAQUE!");
+                break;
+
+            case RitmoManager.TipoAccion.Especial:
+                Debug.Log("Tropas: ESPECIAL!");
+                break;
+
+            default:
+                Debug.Log($"Combo detectado ({combo.id}) pero sin acción asignada.");
                 break;
         }
     }
 
-    void MoverHaciaAdelante()
+    // Legacy: por si aún disparas strings tipo "FALLO"
+    void ManejarComandoLegacy(string comando)
     {
-        posicionObjetivo += Vector3.right * distanciaPaso;
-        StartCoroutine(SuavizarMovimiento());
+        if (comando == "FALLO")
+        {
+            Debug.Log("Las tropas se tambalean por perder el ritmo...");
+        }
     }
 
-    void MoverHaciaAtras()
+    void Mover(Vector3 dir, float distancia)
     {
-        posicionObjetivo += Vector3.left * distanciaPaso;
+        posicionObjetivo += dir * distancia;
         StartCoroutine(SuavizarMovimiento());
     }
 
@@ -68,8 +99,8 @@ public class ControladorTropas : MonoBehaviour
         while (Vector3.Distance(transform.position, posicionObjetivo) > 0.01f)
         {
             transform.position = Vector3.MoveTowards(
-                transform.position, 
-                posicionObjetivo, 
+                transform.position,
+                posicionObjetivo,
                 velocidadMovimiento * Time.deltaTime
             );
             yield return null;
