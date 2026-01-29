@@ -15,10 +15,10 @@ MonoBehaviour:
   Path: Assets/FMOD/sound/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639052816346808327
+  lastModified: 639052984348301083
   FileSizes:
   - Name: Desktop
-    Value: 762
+    Value: 896
   Exists: 1
 --- !u!114 &-6301222917008075051
 MonoBehaviour:
@@ -35,11 +35,38 @@ MonoBehaviour:
   Path: Assets/FMOD/sound/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639052816346798330
+  lastModified: 639052984348291089
   FileSizes:
   - Name: Desktop
-    Value: 11181664
+    Value: 11233376
   Exists: 1
+--- !u!114 &-3825148011371398455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/hityellow
+  m_EditorClassIdentifier: 
+  Path: event:/hityellow
+  Guid:
+    Data1: 1496055382
+    Data2: 1204712559
+    Data3: -1604208763
+    Data4: 32835788
+  Banks:
+  - {fileID: -6301222917008075051}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 550
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57,12 +84,15 @@ MonoBehaviour:
   - {fileID: -6301222917008075051}
   EditorEvents:
   - {fileID: 3962706617486484775}
+  - {fileID: -3825148011371398455}
+  - {fileID: 8815231078316182680}
+  - {fileID: 4493780123560189096}
   EditorParameters: []
   MasterBanks:
   - {fileID: -6301222917008075051}
   StringsBanks:
   - {fileID: -8843013979046481810}
-  cacheTime: 639052816346808327
+  cacheTime: 639052984348301083
   cacheVersion: 131635
 --- !u!114 &3962706617486484775
 MonoBehaviour:
@@ -91,3 +121,57 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 60120
+--- !u!114 &4493780123560189096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/hitred
+  m_EditorClassIdentifier: 
+  Path: event:/hitred
+  Guid:
+    Data1: 2075156727
+    Data2: 1209200271
+    Data3: 781725328
+    Data4: -1378654086
+  Banks:
+  - {fileID: -6301222917008075051}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1350
+--- !u!114 &8815231078316182680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/hitgreen
+  m_EditorClassIdentifier: 
+  Path: event:/hitgreen
+  Guid:
+    Data1: -1229300092
+    Data2: 1108720371
+    Data3: 1305971382
+    Data4: 829415751
+  Banks:
+  - {fileID: -6301222917008075051}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 3761

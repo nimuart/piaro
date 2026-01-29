@@ -24,6 +24,12 @@ public class ControladorTropas : MonoBehaviour
     public Vector3 projectileSpawnOffset = Vector3.zero;
     public float projectileSpawnHeight = 1.0f;
     public float projectileSpeedFallback = 8f;
+    [Header("Armas")]
+    public GameObject[] weaponProjectiles = new GameObject[3];
+    public Color[] weaponTint = new Color[3];
+    public int currentWeapon = 0;
+    public float fireRate = 6f; // shots per second
+    private float fireCooldown = 0f;
 
     // legacy positional movement removed in favor of continuous stacked movement
 
@@ -47,6 +53,15 @@ public class ControladorTropas : MonoBehaviour
     // Nuevo: recibe el combo completo con su "accion"
     void ManejarCombo(RitmoManager.ComboDef combo)
     {
+        // Weapon change via combo
+        if (combo.weaponIndex >= 0)
+        {
+            int idx = Mathf.Clamp(combo.weaponIndex, 0, weaponProjectiles.Length - 1);
+            currentWeapon = idx;
+            Debug.Log($"Weapon switched to slot {currentWeapon}");
+            return;
+        }
+
         switch (combo.accion)
         {
             case RitmoManager.TipoAccion.MoverAdelante:
@@ -79,11 +94,16 @@ public class ControladorTropas : MonoBehaviour
 
                     if (prefabToUse != null)
                     {
+                        // spawn in front
                         Vector3 spawnPos = transform.position + transform.forward + Vector3.up * projectileSpawnHeight + projectileSpawnOffset;
                         GameObject p = Instantiate(prefabToUse, spawnPos, Quaternion.identity);
                         Rigidbody rb = p.GetComponent<Rigidbody>();
                         float speed = combo.projectileSpeed > 0f ? combo.projectileSpeed : projectileSpeedFallback;
                         if (rb != null) rb.linearVelocity = transform.forward * speed;
+
+                        // Tint projectile if possible
+                        var sr = p.GetComponentInChildren<SpriteRenderer>();
+                        if (sr != null && weaponTint.Length > 0) sr.color = weaponTint[Mathf.Clamp(currentWeapon,0,weaponTint.Length-1)];
 
                         // Intentar pasar el daño al proyectil: función SetDamage(float) si existe
                         p.SendMessage("SetDamage", finalDamage, SendMessageOptions.DontRequireReceiver);
@@ -142,6 +162,9 @@ public class ControladorTropas : MonoBehaviour
 
     void Update()
     {
+        // cooldown for firing
+        if (fireCooldown > 0f) fireCooldown -= Time.deltaTime;
+
         // ajustar velocidad hacia target
         float accel = targetSpeed > currentSpeed ? acceleration : deceleration;
         currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, accel * Time.deltaTime);
@@ -150,6 +173,12 @@ public class ControladorTropas : MonoBehaviour
         if (moveDirection.sqrMagnitude > 0.001f && currentSpeed > 0f)
         {
             transform.position += moveDirection * currentSpeed * Time.deltaTime;
+        }
+
+        // Mouse aim + fire
+        if (Input.GetMouseButton(0))
+        {
+            TryFireAtMouse();
         }
     }
 
@@ -167,6 +196,41 @@ public class ControladorTropas : MonoBehaviour
             {
                 rb.linearVelocity = new Vector3(rb.linearVelocity.x, 6f, rb.linearVelocity.z);
             }
+        }
+    }
+
+    void TryFireAtMouse()
+    {
+        if (fireCooldown > 0f) return;
+        Camera cam = Camera.main;
+        if (cam == null) return;
+
+        // Raycast to plane at unit's y
+        Plane plane = new Plane(Vector3.up, transform.position);
+        Ray r = cam.ScreenPointToRay(Input.mousePosition);
+        if (plane.Raycast(r, out float enter))
+        {
+            Vector3 hit = r.GetPoint(enter);
+            Vector3 dir = (hit - transform.position).normalized;
+
+            // choose projectile from current weapon, fallback to component prefab
+            GameObject prefab = (weaponProjectiles != null && currentWeapon >= 0 && currentWeapon < weaponProjectiles.Length && weaponProjectiles[currentWeapon] != null)
+                ? weaponProjectiles[currentWeapon]
+                : projectilePrefab;
+
+            if (prefab != null)
+            {
+                Vector3 spawnPos = transform.position + dir + Vector3.up * projectileSpawnHeight + projectileSpawnOffset;
+                GameObject p = Instantiate(prefab, spawnPos, Quaternion.LookRotation(dir));
+                Rigidbody rb = p.GetComponent<Rigidbody>();
+                float speed = projectileSpeedFallback;
+                if (rb != null) rb.linearVelocity = dir * speed;
+                p.SendMessage("SetDamage", baseAttackDamage * RitmoManager.Instance.GetCurrentDamageMultiplier(), SendMessageOptions.DontRequireReceiver);
+                var sr = p.GetComponentInChildren<SpriteRenderer>();
+                if (sr != null && weaponTint.Length > 0) sr.color = weaponTint[Mathf.Clamp(currentWeapon,0,weaponTint.Length-1)];
+            }
+
+            fireCooldown = 1f / Mathf.Max(0.0001f, fireRate);
         }
     }
 }

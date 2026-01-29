@@ -57,7 +57,8 @@ public class TempoUI : MonoBehaviour
         t.localScale = baseScale;
     }
 
-    void HandleHit(RitmoManager.HitAccuracy acc, int beatIndex)
+    // New: accept tecla so UI can react to which key was pressed.
+    void HandleHit(RitmoManager.HitAccuracy acc, int beatIndex, RitmoManager.TeclaRitmo tecla)
     {
         if (beatIndex < 0 || beatIndex >= beatFrames.Length) return;
         var img = beatFrames[beatIndex];
@@ -74,6 +75,12 @@ public class TempoUI : MonoBehaviour
 
         StopCoroutine("FlashColor");
         StartCoroutine(FlashColor(img, c, 0.45f));
+    }
+
+    // Backwards-compatible wrapper (in case other code still invokes with 2 args)
+    void HandleHit(RitmoManager.HitAccuracy acc, int beatIndex)
+    {
+        HandleHit(acc, beatIndex, RitmoManager.TeclaRitmo.Space);
     }
 
     IEnumerator FlashColor(Image img, Color c, float duration)

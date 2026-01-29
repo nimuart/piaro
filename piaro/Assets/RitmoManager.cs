@@ -20,7 +20,8 @@ public class RitmoManager : MonoBehaviour
         Defensa,
         Salto,
         SaltoAtaque,
-        Especial
+        Especial,
+        CambiarArma
     }
 
     [Serializable]
@@ -48,10 +49,16 @@ public class RitmoManager : MonoBehaviour
         public bool spawnProjectile = false; // si debe spawnear un proyectil al ejecutarse
         public GameObject projectilePrefab;  // opcional: prefab del proyectil para este combo
         public float projectileSpeed = 8f;   // velocidad con la que lanzar el proyectil
+        [Header("Cambio de arma")]
+        public int weaponIndex = -1; // -1 no cambia arma
     }
 
     [Header("FMOD Setup")]
     public EventReference musicaBase;
+    [Header("Sonidos de hit por precisión")]
+    public EventReference hitGreen;  // perfecto
+    public EventReference hitYellow; // regular
+    public EventReference hitRed;    // goofy / miss
     private FMOD.Studio.EventInstance instanciaMusica;
 
     [Header("Tolerancias (Segundos)")]
@@ -85,8 +92,8 @@ public class RitmoManager : MonoBehaviour
     // Beat tick: pasa el índice del beat (0..3)
     public static event Action<int> OnBeat;
 
-    // Notifica resultado de cada pulsación: accuracy + beatIndex
-    public static event Action<HitAccuracy, int> OnHit;
+    // Notifica resultado de cada pulsación: accuracy + beatIndex + tecla
+    public static event Action<HitAccuracy, int, TeclaRitmo> OnHit;
 
     private double tiempoUltimoPulso;
     private int pulsoActual = 0;
@@ -160,7 +167,10 @@ public class RitmoManager : MonoBehaviour
         else acc = HitAccuracy.Miss;
 
         int beatIndex = pulsoActual % 4;
-        OnHit?.Invoke(acc, beatIndex);
+        OnHit?.Invoke(acc, beatIndex, tecla);
+
+        // Reproducir sonido por precisión (si hay asignado)
+        PlayHitSound(acc);
 
         if (acc != HitAccuracy.Miss)
         {
@@ -176,6 +186,29 @@ public class RitmoManager : MonoBehaviour
         }
     }
 
+    void PlayHitSound(HitAccuracy acc)
+    {
+        try
+        {
+            if (acc == HitAccuracy.Perfect)
+            {
+                RuntimeManager.PlayOneShot(hitGreen);
+            }
+            else if (acc == HitAccuracy.Regular)
+            {
+                RuntimeManager.PlayOneShot(hitYellow);
+            }
+            else // Goofy or Miss
+            {
+                RuntimeManager.PlayOneShot(hitRed);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("FMOD PlayHitSound error: " + e.Message);
+        }
+    }
+
     void FallarCombo(string razon)
     {
         Debug.Log($"<color=red>MISS: {razon}</color>");
@@ -184,8 +217,8 @@ public class RitmoManager : MonoBehaviour
         OnComboUpdated?.Invoke(comboCount, 1f);
         OnComandoDetectado?.Invoke("FALLO");
 
-        // Notify a miss hit on current beat as well
-        OnHit?.Invoke(HitAccuracy.Miss, pulsoActual % 4);
+        // Notify a miss hit on current beat as well (no tecla)
+        OnHit?.Invoke(HitAccuracy.Miss, pulsoActual % 4, TeclaRitmo.Space);
     }
 
     void VerificarCombo()
@@ -214,7 +247,7 @@ public class RitmoManager : MonoBehaviour
                     Rigidbody rb = p.GetComponent<Rigidbody>();
                     if (rb != null)
                     {
-                            rb.linearVelocity = transform.forward * encontrado.projectileSpeed;
+                        rb.linearVelocity = transform.forward * encontrado.projectileSpeed;
                     }
                 }
                 else
@@ -282,9 +315,11 @@ public class RitmoManager : MonoBehaviour
 
         // Movimientos base (ejemplos que pediste)
         Add("MOVE_WWW", "Mover (WWW)", TeclaRitmo.W, TeclaRitmo.W, TeclaRitmo.W, TipoAccion.MoverAdelante);
-        Add("MOVE_SSS", "Retroceder (SSS)", TeclaRitmo.S, TeclaRitmo.S, TeclaRitmo.S, TipoAccion.MoverAtras);
-        Add("MOVE_DDD", "Adelante (DDD)", TeclaRitmo.D, TeclaRitmo.D, TeclaRitmo.D, TipoAccion.MoverAdelante);
-        Add("MOVE_AAA", "Atrás (AAA)", TeclaRitmo.A, TeclaRitmo.A, TeclaRitmo.A, TipoAccion.MoverAtras);
+        // Weapon changes via A/A/A, S/S/S, D/D/D
+        AddWeapon("WEAP_AAA", "Arma A (AAA)", TeclaRitmo.A, TeclaRitmo.A, TeclaRitmo.A, 0);
+        AddWeapon("WEAP_SSS", "Arma S (SSS)", TeclaRitmo.S, TeclaRitmo.S, TeclaRitmo.S, 1);
+        AddWeapon("WEAP_DDD", "Arma D (DDD)", TeclaRitmo.D, TeclaRitmo.D, TeclaRitmo.D, 2);
+        // Keep a DDD legacy move? removed to prioritize weapon selection
 
         // Ataques / variaciones (tú mencionaste estos patrones)
         Add("ATK_DSA", "Ataque (DSA)", TeclaRitmo.D, TeclaRitmo.S, TeclaRitmo.A, TipoAccion.Atacar);
@@ -319,6 +354,21 @@ public class RitmoManager : MonoBehaviour
             k3 = c,
             k4 = TeclaRitmo.Space,
             accion = accion
+        });
+    }
+
+    void AddWeapon(string id, string displayName, TeclaRitmo a, TeclaRitmo b, TeclaRitmo c, int weaponIndex)
+    {
+        combos.Add(new ComboDef
+        {
+            id = id,
+            displayName = displayName,
+            k1 = a,
+            k2 = b,
+            k3 = c,
+            k4 = TeclaRitmo.Space,
+            accion = TipoAccion.CambiarArma,
+            weaponIndex = weaponIndex
         });
     }
 }

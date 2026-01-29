@@ -666,6 +666,27 @@ MonoBehaviour:
       Data3: 2023917195
       Data4: 2002381247
     Path: event:/Beat Callback
+  hitGreen:
+    Guid:
+      Data1: -1229300092
+      Data2: 1108720371
+      Data3: 1305971382
+      Data4: 829415751
+    Path: event:/hitgreen
+  hitYellow:
+    Guid:
+      Data1: 1496055382
+      Data2: 1204712559
+      Data3: -1604208763
+      Data4: 32835788
+    Path: event:/hityellow
+  hitRed:
+    Guid:
+      Data1: 2075156727
+      Data2: 1209200271
+      Data3: 781725328
+      Data4: -1378654086
+    Path: event:/hitred
   tolPerfect: 0.1
   tolRegular: 0.3
   tolGoofy: 0.4
@@ -684,6 +705,7 @@ MonoBehaviour:
     spawnProjectile: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 8
+    weaponIndex: -1
   - id: Adelante
     displayName: Adelante
     k1: 3
@@ -698,6 +720,7 @@ MonoBehaviour:
     spawnProjectile: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 8
+    weaponIndex: -1
   - id: Attack
     displayName: Attack
     k1: 2
@@ -712,6 +735,7 @@ MonoBehaviour:
     spawnProjectile: 1
     projectilePrefab: {fileID: 296114177}
     projectileSpeed: 11.3
+    weaponIndex: -1
   - id: Def
     displayName: Def
     k1: 1
@@ -726,6 +750,7 @@ MonoBehaviour:
     spawnProjectile: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 8
+    weaponIndex: -1
   - id: Jump
     displayName: Jump
     k1: 3
@@ -740,6 +765,7 @@ MonoBehaviour:
     spawnProjectile: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 8
+    weaponIndex: -1
   - id: Jump attack
     displayName: Jump attack
     k1: 3
@@ -754,6 +780,7 @@ MonoBehaviour:
     spawnProjectile: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 8
+    weaponIndex: -1
   comboCount: 0
   comboMax: 99
   damagePerCombo: 0.1
@@ -806,16 +833,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   distanciaPaso: 2
   distanciaFast: 4
-  velocidadMovimiento: 5
-  walkSpeed: 1.5
+  velocidadMovimiento: 0.03
+  walkSpeed: 0.77
   runSpeed: 4
   acceleration: 6
-  deceleration: 8
+  deceleration: 9.39
   baseAttackDamage: 10
   projectilePrefab: {fileID: 0}
   projectileSpawnOffset: {x: 0, y: 0, z: 0}
   projectileSpawnHeight: 0.44
   projectileSpeedFallback: 11.56
+  weaponProjectiles:
+  - {fileID: 296114177}
+  - {fileID: 0}
+  - {fileID: 0}
+  weaponTint:
+  - {r: 1, g: 0, b: 0, a: 1}
+  - {r: 0, g: 0.95687324, b: 0.21130423, a: 1}
+  - {r: 0, g: 0.811501, b: 1, a: 1}
+  currentWeapon: 0
+  fireRate: 6
 --- !u!4 &690322617
 Transform:
   m_ObjectHideFlags: 0
@@ -2033,19 +2070,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bpm: 120
-  beatsPerBar: 4
+  beatsPerBar: 8
   alignToBar: 1
   pattern: 0000000002000000010000000200000000000000010000000200000002000000
-  useRandomMode: 0
+  useRandomMode: 1
   restChance: 0.25
   doubleChance: 0.1
   forceAccentOnBeat1Chance: 0.6
-  distancePerBeat: 100
+  distancePerBeat: 238.7
   moveDirection: {x: -1, y: 0}
   prefabA: {fileID: 832174368}
-  prefabB: {fileID: 0}
+  prefabB: {fileID: 275490506}
   parent: {fileID: 1610824117}
-  spawnX: 600
+  spawnX: 170.4
   despawnX: -600
   laneY: 0
 --- !u!1 &1337127072
