@@ -8,12 +8,28 @@ public class ControladorTropas : MonoBehaviour
     public float distanciaFast = 4f;
     public float velocidadMovimiento = 5f;
 
-    private Vector3 posicionObjetivo;
-    private bool estaMoviendose = false;
+    [Header("Movimiento contínuo")]
+    public float walkSpeed = 1.5f;
+    public float runSpeed = 4f;
+    public float acceleration = 6f;
+    public float deceleration = 8f;
+
+    private Vector3 moveDirection = Vector3.zero;
+    private float currentSpeed = 0f;
+    private float targetSpeed = 0f;
+
+    [Header("Combate")]
+    public float baseAttackDamage = 10f;
+    public GameObject projectilePrefab; // prefabricado por defecto para ataques
+    public Vector3 projectileSpawnOffset = Vector3.zero;
+    public float projectileSpawnHeight = 1.0f;
+    public float projectileSpeedFallback = 8f;
+
+    // legacy positional movement removed in favor of continuous stacked movement
 
     void Start()
     {
-        posicionObjetivo = transform.position;
+        currentSpeed = 0f;
     }
 
     void OnEnable()
@@ -47,7 +63,37 @@ public class ControladorTropas : MonoBehaviour
 
             case RitmoManager.TipoAccion.Atacar:
                 Debug.Log("Tropas: ATAQUE!");
-                // Aquí luego: animación / hitbox / daño
+                // Animación / hitbox / daño -> spawn 1 proyectil o aplicar daño cuerpo a cuerpo
+                {
+                    // Determinar prefab a usar: primero el del combo, luego el default del RitmoManager, luego este componente
+                    GameObject prefabToUse = combo.projectilePrefab != null ? combo.projectilePrefab :
+                        (RitmoManager.Instance != null && RitmoManager.Instance.defaultProjectilePrefab != null ? RitmoManager.Instance.defaultProjectilePrefab : projectilePrefab);
+
+                    // Calcular multiplicador: toma el multipler actual + bonus del combo
+                    float multiplier = 1f;
+                    if (RitmoManager.Instance != null)
+                        multiplier = RitmoManager.Instance.GetCurrentDamageMultiplier();
+                    multiplier += combo.bonusDamage;
+
+                    float finalDamage = baseAttackDamage * multiplier;
+
+                    if (prefabToUse != null)
+                    {
+                        Vector3 spawnPos = transform.position + transform.forward + Vector3.up * projectileSpawnHeight + projectileSpawnOffset;
+                        GameObject p = Instantiate(prefabToUse, spawnPos, Quaternion.identity);
+                        Rigidbody rb = p.GetComponent<Rigidbody>();
+                        float speed = combo.projectileSpeed > 0f ? combo.projectileSpeed : projectileSpeedFallback;
+                        if (rb != null) rb.linearVelocity = transform.forward * speed;
+
+                        // Intentar pasar el daño al proyectil: función SetDamage(float) si existe
+                        p.SendMessage("SetDamage", finalDamage, SendMessageOptions.DontRequireReceiver);
+                    }
+                    else
+                    {
+                        // Sin prefab: registro y/o daño cuerpo a cuerpo (implementar según tu sistema de objetivo)
+                        Debug.Log($"Aplicando ataque cuerpo a cuerpo con daño: {finalDamage}");
+                    }
+                }
                 break;
 
             case RitmoManager.TipoAccion.AtacarAereo:
@@ -60,6 +106,7 @@ public class ControladorTropas : MonoBehaviour
 
             case RitmoManager.TipoAccion.Salto:
                 Debug.Log("Tropas: SALTO!");
+                Saltar();
                 break;
 
             case RitmoManager.TipoAccion.SaltoAtaque:
@@ -87,26 +134,39 @@ public class ControladorTropas : MonoBehaviour
 
     void Mover(Vector3 dir, float distancia)
     {
-        posicionObjetivo += dir * distancia;
-        StartCoroutine(SuavizarMovimiento());
+        moveDirection = dir.normalized;
+        // decidir velocidad objetivo según distancia pedido
+        if (Mathf.Approximately(distancia, distanciaFast)) targetSpeed = runSpeed;
+        else targetSpeed = walkSpeed;
     }
 
-    IEnumerator SuavizarMovimiento()
+    void Update()
     {
-        if (estaMoviendose) yield break;
-        estaMoviendose = true;
+        // ajustar velocidad hacia target
+        float accel = targetSpeed > currentSpeed ? acceleration : deceleration;
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, accel * Time.deltaTime);
 
-        while (Vector3.Distance(transform.position, posicionObjetivo) > 0.01f)
+        // aplicar movimiento continuo
+        if (moveDirection.sqrMagnitude > 0.001f && currentSpeed > 0f)
         {
-            transform.position = Vector3.MoveTowards(
-                transform.position,
-                posicionObjetivo,
-                velocidadMovimiento * Time.deltaTime
-            );
-            yield return null;
+            transform.position += moveDirection * currentSpeed * Time.deltaTime;
         }
+    }
 
-        transform.position = posicionObjetivo;
-        estaMoviendose = false;
+    public void Frenar()
+    {
+        targetSpeed = 0f;
+    }
+
+    void Saltar()
+    {
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            if (Mathf.Abs(rb.linearVelocity.y) < 0.1f) // simple grounded check
+            {
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, 6f, rb.linearVelocity.z);
+            }
+        }
     }
 }

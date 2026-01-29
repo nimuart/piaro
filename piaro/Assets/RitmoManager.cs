@@ -6,6 +6,7 @@ using System;
 
 public class RitmoManager : MonoBehaviour
 {
+    public static RitmoManager Instance;
     public enum TeclaRitmo { A, S, D, W, Space }
 
     public enum TipoAccion
@@ -41,6 +42,12 @@ public class RitmoManager : MonoBehaviour
         [Header("Opcional (para futuro: anim/prefab)")]
         public string animacion;         // nombre de trigger o state
         public GameObject prefabCambio;  // si luego quieres swap/spawn
+        [Header("Efectos del combo")]
+        public int comboGain = 1;            // cuánto incrementa el contador de combos
+        public float bonusDamage = 0f;       // daño extra directo (suma al multiplicador si quieres)
+        public bool spawnProjectile = false; // si debe spawnear un proyectil al ejecutarse
+        public GameObject projectilePrefab;  // opcional: prefab del proyectil para este combo
+        public float projectileSpeed = 8f;   // velocidad con la que lanzar el proyectil
     }
 
     [Header("FMOD Setup")]
@@ -55,6 +62,15 @@ public class RitmoManager : MonoBehaviour
     [Header("Combos (Editables en Inspector)")]
     public List<ComboDef> combos = new List<ComboDef>();
 
+    [Header("Sistema de Combo")]
+    public int comboCount = 0;
+    public int comboMax = 99;
+    public float damagePerCombo = 0.1f; // cada punto de combo añade este multiplicador
+    public GameObject defaultProjectilePrefab; // prefab global si el combo no define uno
+
+    // Notifica (comboCount, totalMultiplier)
+    public static event Action<int, float> OnComboUpdated;
+
     [Header("Estado del Combo (debug)")]
     public List<TeclaRitmo> secuenciaActual = new List<TeclaRitmo>();
 
@@ -63,6 +79,14 @@ public class RitmoManager : MonoBehaviour
 
     // Evento viejo (por si aún lo usas en otros scripts)
     public static event Action<string> OnComandoDetectado;
+
+    public enum HitAccuracy { Perfect, Regular, Goofy, Miss }
+
+    // Beat tick: pasa el índice del beat (0..3)
+    public static event Action<int> OnBeat;
+
+    // Notifica resultado de cada pulsación: accuracy + beatIndex
+    public static event Action<HitAccuracy, int> OnHit;
 
     private double tiempoUltimoPulso;
     private int pulsoActual = 0;
@@ -75,6 +99,7 @@ public class RitmoManager : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         // Si está vacío, lo prellenamos una sola vez.
         // (Así no te lo dejo “vacío” y puedes editarlo en inspector después.)
         if (combos == null) combos = new List<ComboDef>();
@@ -101,6 +126,7 @@ public class RitmoManager : MonoBehaviour
             pulsoActual = timelineInfo.beat;
             tiempoUltimoPulso = Time.timeAsDouble;
             yaPresionoEnEstePulso = false;
+            OnBeat?.Invoke(pulsoActual % 4);
         }
 
         // 3 teclas + remate Space/click
@@ -127,10 +153,19 @@ public class RitmoManager : MonoBehaviour
         double diferencia = Math.Abs(tiempoAhora - tiempoUltimoPulso);
         yaPresionoEnEstePulso = true;
 
-        if (diferencia <= tolGoofy)
+        HitAccuracy acc;
+        if (diferencia <= tolPerfect) acc = HitAccuracy.Perfect;
+        else if (diferencia <= tolRegular) acc = HitAccuracy.Regular;
+        else if (diferencia <= tolGoofy) acc = HitAccuracy.Goofy;
+        else acc = HitAccuracy.Miss;
+
+        int beatIndex = pulsoActual % 4;
+        OnHit?.Invoke(acc, beatIndex);
+
+        if (acc != HitAccuracy.Miss)
         {
             secuenciaActual.Add(tecla);
-            Debug.Log($"<color=cyan>{tecla}</color> ({secuenciaActual.Count}/4)");
+            Debug.Log($"<color=cyan>{tecla}</color> ({secuenciaActual.Count}/4) [{acc}]");
 
             if (secuenciaActual.Count == 4)
                 VerificarCombo();
@@ -145,7 +180,12 @@ public class RitmoManager : MonoBehaviour
     {
         Debug.Log($"<color=red>MISS: {razon}</color>");
         secuenciaActual.Clear();
+        comboCount = 0;
+        OnComboUpdated?.Invoke(comboCount, 1f);
         OnComandoDetectado?.Invoke("FALLO");
+
+        // Notify a miss hit on current beat as well
+        OnHit?.Invoke(HitAccuracy.Miss, pulsoActual % 4);
     }
 
     void VerificarCombo()
@@ -157,6 +197,31 @@ public class RitmoManager : MonoBehaviour
             Debug.Log($"<color=magenta>COMBO: {encontrado.id} ({encontrado.accion})</color>");
             OnComboDetectado?.Invoke(encontrado);
             OnComandoDetectado?.Invoke(encontrado.id); // compat
+
+            // Aplicar efectos de combo: incrementar contador y notificar multiplier
+            comboCount = Mathf.Clamp(comboCount + encontrado.comboGain, 0, comboMax);
+            float totalMultiplier = 1f + comboCount * damagePerCombo + encontrado.bonusDamage;
+            OnComboUpdated?.Invoke(comboCount, totalMultiplier);
+
+            // Si el combo implica disparar, instanciamos 1 proyectil (si hay prefab)
+            if (encontrado.spawnProjectile || encontrado.projectilePrefab != null)
+            {
+                GameObject prefabToUse = encontrado.projectilePrefab != null ? encontrado.projectilePrefab : defaultProjectilePrefab;
+                if (prefabToUse != null)
+                {
+                    Vector3 spawnPos = transform.position + transform.forward + Vector3.up * 1.0f;
+                    GameObject p = Instantiate(prefabToUse, spawnPos, Quaternion.identity);
+                    Rigidbody rb = p.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                            rb.linearVelocity = transform.forward * encontrado.projectileSpeed;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("No projectile prefab assigned (combo nor default).");
+                }
+            }
         }
         else
         {
@@ -178,6 +243,12 @@ public class RitmoManager : MonoBehaviour
                 return c;
         }
         return null;
+    }
+
+    // Acceso conveniente para otros scripts: multiplicador de daño actual
+    public float GetCurrentDamageMultiplier()
+    {
+        return 1f + comboCount * damagePerCombo;
     }
 
     void OnDestroy()
