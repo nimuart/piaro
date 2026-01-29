@@ -245,7 +245,44 @@ MonoBehaviour:
   tolPerfect: 0.1
   tolRegular: 0.2
   tolGoofy: 0.3
-  secuenciaActual: []
+  combos:
+  - id: fast
+    displayName: fast
+    k1: 1
+    k2: 0
+    k3: 2
+    k4: 4
+    accion: 3
+    animacion: 
+    prefabCambio: {fileID: 0}
+  - id: move
+    displayName: move
+    k1: 3
+    k2: 3
+    k3: 3
+    k4: 4
+    accion: 1
+    animacion: 
+    prefabCambio: {fileID: 0}
+  - id: atk
+    displayName: atk
+    k1: 0
+    k2: 1
+    k3: 2
+    k4: 4
+    accion: 4
+    animacion: 
+    prefabCambio: {fileID: 0}
+  - id: def
+    displayName: def
+    k1: 1
+    k2: 1
+    k3: 1
+    k4: 4
+    accion: 6
+    animacion: 
+    prefabCambio: {fileID: 0}
+  secuenciaActual: 
 --- !u!4 &683316291
 Transform:
   m_ObjectHideFlags: 0
@@ -290,8 +327,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36285961aa156d04bb1f6b117df7678d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distanciaPaso: 2
-  velocidadMovimiento: 5
 --- !u!4 &690322617
 Transform:
   m_ObjectHideFlags: 0
